@@ -1,6 +1,5 @@
-## NIWC
-
-#Non-Intrusive Identification of Water Consumption
+## NIWC 
+__Non-Intrusive Identification of Water Consumption__
 
 Framework for comparing different classification algorithms on identifying water consumption. 
 
