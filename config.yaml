@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 # --- Experiment configurations --------------------------------------------------------------------
 
+# specify time limit to be used for cross-validation
+max_time: 300
 
 # --- Data configurations --------------------------------------------------------------------------
 
@@ -25,7 +27,7 @@ target:
 # --- Validation configuration ---------------------------------------------------------------------
 
 # specify how many folds to use for cross-validation
-n-folds: 10
+n-folds: 2
 
 
 
@@ -34,21 +36,21 @@ n-folds: 10
 # specify one or multiple classification models (RandomForest, LightGBM, XGBoost, ANN):
 algorithm:
 - RandomForestClassifier
-- LGBMClassifier
-#- XGBoost
-#- ANN
+# - LGBMClassifier
+# - XGBoost
+# - ANN
 
 # set hyperparameters for selected model(s)
 hyperParams:
     RandomForestClassifier:
          n_estimators:
              - 100
-             #- 200 
+             - 200 
          max_depth:
              - 10
-             #- 30
-             #- 45
-             #- 75
+             # - 30
+             # - 45
+             # - 75
             # - 100
          min_samples_split:
              - 2
@@ -59,7 +61,6 @@ hyperParams:
              #- 2
              #- 4
             # - 1000
-
     LGBMClassifier:
         max_depth:
             - 3
@@ -72,8 +73,7 @@ hyperParams:
             #- 0.08
             #- 0.16
             #- 0.32
-        
-            
+
              
              
                   
