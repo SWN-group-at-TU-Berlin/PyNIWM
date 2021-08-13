@@ -45,27 +45,27 @@ hyperParams:
     RandomForestClassifier:
          n_estimators:
              - 100
-             - 200 
+             # - 200 
          max_depth:
              - 10
              # - 30
              # - 45
              # - 75
-            # - 100
+             # - 100
          min_samples_split:
              - 2
-             #- 5
-            # - 50
+             # - 5
+             # - 50
          min_samples_leaf:
              - 1
-             #- 2
-             #- 4
-            # - 1000
+             # - 2
+             # - 4
+             # - 1000
     LGBMClassifier:
         max_depth:
             - 3
-            #- 4
-            #- 5
+            # - 4
+            # - 5
         learning_rate:
             - 0.01
             #- 0.02

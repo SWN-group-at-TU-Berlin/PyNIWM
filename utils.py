@@ -26,7 +26,7 @@ from lightgbm import LGBMClassifier
 
 
 import seaborn as sns 
-import matplotlib as plt
+import matplotlib.pyplot as plt
 from imblearn.over_sampling import SMOTE
 from imblearn.combine import SMOTEENN
 
@@ -176,7 +176,7 @@ def run_CV(configfile, X_cv, y_cv):
     return all_scores, best_params
 
 
-##### Function for running models with best parameters #####################
+##### Function for running models with best parameters #######################
 
 def run_best_model(algorithm, best_params, X_train, X_test, y_train, y_test):
     
@@ -201,20 +201,44 @@ def run_best_model(algorithm, best_params, X_train, X_test, y_train, y_test):
          model.fit(X_train_resample, y_train_resample)
          # predict on validation fold
          prediction = model.predict(X_test)
-         Fscore = f1_score(y_test, prediction, average='micro')
          
-         cr = classification_report(y_test, prediction, output_dict=False)
-         print(cr)
-         
-         best_scores = pd.concat([best_scores,pd.DataFrame([{'algorithm':i, 'F1 score':Fscore }])])
+         # save prediction results for each algorithm
+         best_scores = pd.concat([best_scores,pd.DataFrame([{'algorithm':i, 'prediction': prediction }])])
          
     best_scores.reset_index(drop=True, inplace=True)
-    ## add confusion matrix and feature importance
     return best_scores
         
 
     
+##### Function for displaying results ########################################
 
+def plot_best_model(result_matrix, y_test):
+    
+    # Sorting fixturers in decreasing order of event counts
+    fixtures,counts = np.unique(y_test, return_counts=True)
+    count_sort_ind = np.argsort(-counts)
+    
+    # iterate over algorithms
+    
+    N = len(result_matrix)
+    fig, axis = plt.subplots(nrows=N, ncols=1, sharey=True, figsize=(8*N,7*N), sharex = True)
+    for i in range(N):
+        
+        # create  and plot confusion matrix
+        cmNorm = confusion_matrix(y_test, result_matrix.iloc[i]['prediction'], normalize = 'true')
+        heatmap = sns.heatmap(cmNorm[:, count_sort_ind][count_sort_ind], annot=True, fmt=".0%", cmap="Blues", ax=axis[i])
+        heatmap.yaxis.set_ticklabels(fixtures[count_sort_ind], rotation=0, ha='right', fontsize=12)
+        heatmap.xaxis.set_ticklabels(fixtures[count_sort_ind], rotation=45, ha='right', fontsize=12)
+        axis[i].set_ylabel('True label', fontsize=14)
+        axis[i].set_xlabel('Predicted label', fontsize=14)
+        axis[i].set_title('Confusion Matrix for '+ result_matrix.iloc[i]['algorithm'], fontsize=16)
+        b, t = axis[i].set_ylim() # discover the values for bottom and top
+        b += 0.5 # Add 0.5 to the bottom
+        t -= 0.5 # Subtract 0.5 from the top
+        axis[i].set_ylim(b, t) # update the ylim(bottom, top) values
+
+
+    
     
     
     
