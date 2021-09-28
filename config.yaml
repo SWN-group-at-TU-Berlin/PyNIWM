@@ -3,7 +3,14 @@
 # --- Experiment configurations --------------------------------------------------------------------
 
 # specify time limit to be used for cross-validation
-max_time: 300
+# max_time: 300
+
+# random seeds for reproducibility
+np_seed: 12565      # numpy
+rn_seed: 25456      # random
+tf_seed: 17681      # tensorflow
+dprep_seed: 53442   # train-test split
+smote_seed: 84355   # SMOTE
 
 # --- Data configurations --------------------------------------------------------------------------
 
@@ -19,15 +26,18 @@ features:
 - Weekday
 - Weekend
 
-
 target:
 - SumAs
+
+train_size: -1 # size training data to be used (set = -1 for full dataset; other values for fast debugging)
+frac_tst: 0.25
+smote_kneighbors: 6
  
 
 # --- Validation configuration ---------------------------------------------------------------------
 
 # specify how many folds to use for cross-validation
-n-folds: 2
+n-folds: 5
 
 
 
@@ -36,44 +46,75 @@ n-folds: 2
 # specify one or multiple classification models (RandomForest, LightGBM, XGBoost, ANN):
 algorithm:
 - RandomForestClassifier
-# - LGBMClassifier
+- LGBMClassifier
+- ANNClassifier
 # - XGBoost
-# - ANN
 
 # set hyperparameters for selected model(s)
 hyperParams:
     RandomForestClassifier:
          n_estimators:
-             - 100
-             # - 200 
-         max_depth:
              - 10
-             # - 30
-             # - 45
+             - 50 
+             - 100
+         max_depth:
+             - 5
+             # - 8
+             # - 12
              # - 75
              # - 100
          min_samples_split:
-             - 2
-             # - 5
+             # - 2
+             - 5
              # - 50
          min_samples_leaf:
-             - 1
+             # - 1
              # - 2
-             # - 4
+             - 25
              # - 1000
+         n_jobs:
+             - -1
     LGBMClassifier:
         max_depth:
             - 3
-            # - 4
-            # - 5
+            - 5
+            - 7
+            # - 9
         learning_rate:
-            - 0.01
-            #- 0.02
-            #- 0.04
-            #- 0.08
-            #- 0.16
-            #- 0.32
-
-             
-             
-                  
+            # - 0.001
+            # - 0.01
+            - 0.1
+            # - 0.08
+            # - 0.16
+            # - 0.32
+        n_jobs:
+            - -1
+        n_estimators:
+            - 20
+    ANNClassifier:
+        n_classes:
+            - 12
+            # Do not change n_classes!
+        neurons_per_layer:
+            # - [25]
+            # - [50]
+            # - [100]
+            - [50, 50]
+            - [50, 50, 50]
+            - [100,100,100]
+        act_fun:
+            - 'relu'
+           # - 'tanh'
+        dropout_rate:
+            # - 0
+            # - 0.1
+            - 0.2
+        batch_size:
+            - 4096
+        epochs:
+            # - 1
+            # - 10
+            # - 20
+            - 10
+        verbose:
+            - 0
