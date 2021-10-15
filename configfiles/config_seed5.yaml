@@ -1,0 +1,140 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# --- Experiment configurations --------------------------------------------------------------------
+
+# specify time limit to be used for cross-validation
+# max_time: 300
+
+# random seeds for reproducibility
+np_seed: 16653      # numpy
+rn_seed: 16         # random
+tf_seed: 4848       # tensorflow
+dprep_seed: 53442   # train-test split
+smote_seed: 84355   # SMOTE
+
+# --- Data configurations --------------------------------------------------------------------------
+
+# which data set to use
+dataset: /Users/Marie-Philine/tubCloud/SWNteam/_RESEARCH/W-E_jointAnalysis/REU_Classification/Processed Data/REU2016_set2.csv            #   REU2016_set2.csv
+
+features:
+- Duration
+- Peak
+- Volume
+- Mode
+- Hour
+- Weekday
+- Weekend
+
+target:
+- SumAs
+
+train_size: -1 # size training data to be used (set = -1 for full dataset; other values for fast debugging)
+frac_tst: 0.25
+smote_kneighbors: 6
+ 
+
+# --- Validation configuration ---------------------------------------------------------------------
+
+# specify how many folds to use for cross-validation
+n-folds: 5
+
+
+
+# --- Model configuration --------------------------------------------------------------------------
+
+# specify one or multiple classification models (RandomForest, LightGBM, XGBoost, ANN):
+algorithm:
+- RandomForestClassifier
+# - XGBClassifier
+# - LGBMClassifier
+#- ANNClassifier
+
+# set hyperparameters for selected model(s)
+hyperParams:
+    RandomForestClassifier:
+         n_estimators:
+             # - 50 
+             # - 100
+             - 200
+             # - 500
+         max_depth:
+             - 10
+             # - 50
+             # - 75
+             # - 100
+         min_samples_split:
+             # - 2
+             - 5
+             # - 15
+         min_samples_leaf:
+             # - 1
+              - 2
+         n_jobs:
+             - -1
+    XGBClassifier:
+        max_depth:
+            - 3
+            # - 6
+            # - 10
+        learning_rate:
+            - 0.01
+            # - 0.1
+            # - 0.2
+            # - 0.3
+        n_estimators:
+            - 50
+            # - 100
+            # - 500
+            # - 1000
+        subsample:
+            - 0.6
+            # - 1
+        n_jobs:
+            - -1
+        objective:
+            - 'multi:softmax'
+    LGBMClassifier:
+        max_depth:
+            - 3
+            # - 5
+            # - 7
+            # - 9
+        learning_rate:
+            # - 0.001
+            # - 0.01
+            - 0.1
+            # - 0.08
+            # - 0.16
+            # - 0.32
+        n_estimators:
+            - 20
+        n_jobs:
+            - -1
+    ANNClassifier:
+        n_classes:
+            - 12
+            # Do not change n_classes!
+        neurons_per_layer:
+            # - [25]
+            # - [50]
+            # - [100]
+            - [50, 50]
+            - [50, 50, 50]
+            - [100,100,100]
+        act_fun:
+            - 'relu'
+           # - 'tanh'
+        dropout_rate:
+            # - 0
+            # - 0.1
+            - 0.2
+        batch_size:
+            - 4096
+        epochs:
+            # - 1
+            # - 10
+            # - 20
+            - 10
+        verbose:
+            - 0

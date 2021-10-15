@@ -27,7 +27,7 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler
 # other packages
 import time
 from ruamel.yaml import YAML
-from tqdm import tqdm_notebook as tqdm
+from tqdm.notebook import tqdm as tqdm
 from imblearn.over_sampling import SMOTE
 from imblearn.combine import SMOTEENN
 import tensorflow as tf
@@ -35,6 +35,7 @@ import warnings; warnings.simplefilter('ignore')
 
 # ML methods
 from sklearn.ensemble import RandomForestClassifier
+from xgboost import XGBClassifier
 from lightgbm import LGBMClassifier
 from ANNClassifier import ANNClassifier
 
@@ -48,16 +49,22 @@ def read_config(filename):
         
     return cfg
 
-def initalize_random_generators(cfg):
+def initalize_random_generators(cfg, count=0):
+    
+    '''
+    This function initialites the random seeds specified in the config file.
+    count: used for multiple seed testing
+    '''
     # initialize random seeds for reproducibility
     np_seed=cfg['np_seed']
     rn_seed=cfg['rn_seed']
     tf_seed=cfg['tf_seed']
 
     # initialize random generators for numpy, np and tensorflow
-    np.random.seed(37)
-    rn.seed(1254)
-    tf.random.set_seed(89)
+    np.random.seed(np_seed)       
+    rn.seed(rn_seed)
+    tf.random.set_seed(tf_seed)
+    return np_seed, rn_seed, tf_seed
 
 ##### Function to load dataset ###############################################
 def load_data(filepath):    
@@ -106,7 +113,7 @@ def create_folds_with_SMOTE(X_cv, y_cv, n_splits, smoter=None):
         folds.append({'train':(X_train,y_train,tra_), 'valid':(X_valid,y_valid,val_), 'scaler': scaler})
     return folds
 
-def single_model_cv(folds, algorithm, params, n_valid, X_test=None):    
+def single_model_cv(folds, algorithm, params, n_valid, X_test=None, disable_tdqm=False):    
     ## initiate object with out-of-fold predictions for computational efficiency 
     oof_preds = np.zeros((n_valid,1)).astype(object)
     # oof_preds = pd.Series(index=np.arange(0,n_valid))    
@@ -121,7 +128,7 @@ def single_model_cv(folds, algorithm, params, n_valid, X_test=None):
     f1scores = []
 
     # iterate k-fold
-    for i, fold in enumerate(tqdm(folds)):
+    for i, fold in enumerate(tqdm(folds, disable = disable_tdqm)):
         # get data
         X_train, y_train, _    = fold['train']
         X_valid, y_valid, val_ = fold['valid'] # retrieve also validation indexes for oof_preds
@@ -145,16 +152,16 @@ def single_model_cv(folds, algorithm, params, n_valid, X_test=None):
 
 
 ##### Function for running the CV on all selected models #####################
-def cv_model_selection(folds, configfile):    
+def cv_model_selection(folds, configfile, seed):    
 
     # get total length of validation dataset
     n_valid = 0
     for fold in folds:
-        n_valid += fold['valid'][0].shape[0]        
-
+        n_valid += fold['valid'][0].shape[0] 
+    
     # initialize matrix with cv performances and out of fold predictions    
-    results = pd.DataFrame(columns=['algorithm','params','f1scores','avg_f1score','time','oof_preds'])
-
+    results = pd.DataFrame(columns=['algorithm','seed','params','f1scores','avg_f1score','time','oof_preds'])
+    
     # cv all model combinations    
     k = 0 # row counter
     for alg_name in configfile['algorithm']:        
@@ -172,12 +179,35 @@ def cv_model_selection(folds, configfile):
             start_time = time.time()
             # launch cv for single model
             f1scores, oof_preds, _ = single_model_cv(folds, algorithm, params,n_valid)                        
-            train_time = time.time()-start_time             
+            train_time = time.time()-start_time              
             # store results              
-            results.loc[k] = (alg_name,params,f1scores,np.mean(f1scores),train_time,oof_preds)
+            results.loc[k] = (alg_name,seed,params,f1scores,np.mean(f1scores),train_time,oof_preds)
             k += 1
-            
     return results
+            
+    
+def best_model_selection(configfile, num_seed):
+    # initialize matrix with best performing model from each seed configuration
+    performance_distribution = pd.DataFrame(columns=['algorithm','seed','params','avg_f1score'])
+    # extract best model for each seed from cv files
+    for j in range(num_seed): 
+        results = pd.read_pickle('cv_results/cv_results_seed{}'.format(j+1))
+        # select best params combination for each algorithm
+        best_ixes = results.groupby('algorithm')['avg_f1score'].idxmax().sort_values().values
+        best_models = results.loc[best_ixes].drop(columns=['f1scores','time','oof_preds'])
+        performance_distribution = performance_distribution.append(best_models)
+    performance_distribution = performance_distribution.reset_index(drop=True)
+    # final selection of best params combination
+    final_models = pd.DataFrame(columns=['algorithm','params', 'avg_f1score'])
+    algo = performance_distribution.groupby('algorithm')
+    for k,(name, group) in enumerate(algo):
+        # calculate parameter combination for median model performance
+        median_params = round(group['params'].apply(pd.Series).median(),0).astype(int).to_dict()
+        # median f1 score for each algorithm
+        median_f1score = group['avg_f1score'].median()
+        final_models.loc[k] = (name, median_params, median_f1score)
+        
+    return final_models, performance_distribution
     
 def single_model_cv_and_test(folds,alg_name,params,X_test,y_test,maj_vote='hard'):
     # only hard majority vote implemented; to implement: 'soft' (e.g., with predict proba)
@@ -189,8 +219,7 @@ def single_model_cv_and_test(folds,alg_name,params,X_test,y_test,maj_vote='hard'
     n_valid = 0
     for fold in folds:
         n_valid += fold['valid'][0].shape[0]   
-    # cross-validate model
-    f1scores, oof_preds, fold_tst_preds = single_model_cv(folds, algorithm, params,n_valid, X_test)
+    f1scores, oof_preds, fold_tst_preds = single_model_cv(folds, algorithm, params,n_valid, X_test, True)
     # majority vote
     tst_preds = fold_tst_preds.max(axis=1)
     return tst_preds, fold_tst_preds
