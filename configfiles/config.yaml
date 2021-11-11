@@ -2,16 +2,6 @@
 # -*- coding: utf-8 -*-
 # --- Experiment configurations --------------------------------------------------------------------
 
-# specify time limit to be used for cross-validation
-# max_time: 300
-
-# random seeds for reproducibility
-np_seed: 95         # numpy
-rn_seed: 71         # random
-tf_seed: 1682       # tensorflow
-dprep_seed: 53442   # train-test split
-smote_seed: 84355   # SMOTE
-
 # --- Data configurations --------------------------------------------------------------------------
 
 # which data set to use
@@ -45,9 +35,10 @@ n-folds: 5
 
 # specify one or multiple classification models (RandomForest, LightGBM, XGBoost, ANN):
 algorithm:
-- RandomForestClassifier
+# - RandomForestClassifier
+- LogisticRegression
 # - XGBClassifier
-# - LGBMClassifier
+- LGBMClassifier
 #- ANNClassifier
 
 # set hyperparameters for selected model(s)
@@ -72,6 +63,25 @@ hyperParams:
               - 2
          n_jobs:
              - -1
+    LogisticRegression:
+        penalty:
+            # - 'none'
+            - 'l2'
+        C:
+            # - 0.01
+            - 0.1
+            # - 0.5 
+            # - 1.0
+            # - 2.0
+            # - 4.0
+            # - 10.0
+        solver: 
+            # - 'newton-cg'
+            # - 'sag'
+            - 'saga'
+            # - 'lbfgs'
+        n_jobs:
+            - -1
     XGBClassifier:
         max_depth:
             - 3
@@ -79,7 +89,7 @@ hyperParams:
             # - 10
         learning_rate:
             - 0.01
-            # - 0.1
+            - 0.1
             # - 0.2
             # - 0.3
         n_estimators:
@@ -105,10 +115,13 @@ hyperParams:
             # - 0.01
             - 0.1
             # - 0.08
-            # - 0.16
+            - 0.16
             # - 0.32
         n_estimators:
-            - 20
+            - 100
+            # - 200
+            # - 500
+            # - 1000
         n_jobs:
             - -1
     ANNClassifier:

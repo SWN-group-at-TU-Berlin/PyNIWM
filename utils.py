@@ -35,6 +35,7 @@ import warnings; warnings.simplefilter('ignore')
 
 # ML methods
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
 from xgboost import XGBClassifier
 from lightgbm import LGBMClassifier
 from ANNClassifier import ANNClassifier
@@ -56,15 +57,15 @@ def initalize_random_generators(cfg, count=0):
     count: used for multiple seed testing
     '''
     # initialize random seeds for reproducibility
-    np_seed=cfg['np_seed']
-    rn_seed=cfg['rn_seed']
-    tf_seed=cfg['tf_seed']
+    np_seed=cfg['np_seed'][count]
+    rn_seed=cfg['rn_seed'][count]
+    tf_seed=cfg['tf_seed'][count]
 
     # initialize random generators for numpy, np and tensorflow
     np.random.seed(np_seed)       
     rn.seed(rn_seed)
     tf.random.set_seed(tf_seed)
-    return np_seed, rn_seed, tf_seed
+
 
 ##### Function to load dataset ###############################################
 def load_data(filepath):    
@@ -187,26 +188,23 @@ def cv_model_selection(folds, configfile, seed):
             
     
 def best_model_selection(configfile, num_seed):
-    # initialize matrix with best performing model from each seed configuration
-    performance_distribution = pd.DataFrame(columns=['algorithm','seed','params','avg_f1score'])
-    # extract best model for each seed from cv files
+    # initialize matrix for all results 
+    performance_distribution = pd.DataFrame()
+    # load results for each seed from cv files
     for j in range(num_seed): 
-        results = pd.read_pickle('cv_results/cv_results_seed{}'.format(j+1))
-        # select best params combination for each algorithm
-        best_ixes = results.groupby('algorithm')['avg_f1score'].idxmax().sort_values().values
-        best_models = results.loc[best_ixes].drop(columns=['f1scores','time','oof_preds'])
-        performance_distribution = performance_distribution.append(best_models)
-    performance_distribution = performance_distribution.reset_index(drop=True)
+        results = pd.read_pickle('cv_results/cv_results_seed{}'.format(j))
+        performance_distribution = performance_distribution.append(results)
     # final selection of best params combination
-    final_models = pd.DataFrame(columns=['algorithm','params', 'avg_f1score'])
+    final_models = pd.DataFrame(columns=['algorithm','params', 'median_f1score'])
     algo = performance_distribution.groupby('algorithm')
     for k,(name, group) in enumerate(algo):
-        # calculate parameter combination for median model performance
-        median_params = round(group['params'].apply(pd.Series).median(),0).astype(int).to_dict()
-        # median f1 score for each algorithm
-        median_f1score = group['avg_f1score'].median()
-        final_models.loc[k] = (name, median_params, median_f1score)
-        
+        # extract and reshape f1 score for each parameter combination across all seeds
+        f1_matrix = np.array(group.avg_f1score).reshape((num_seed, -1))
+        # compute median and get index and parameters for best median performance model
+        median_best = np.median(f1_matrix, axis=0).max()
+        idx_best = median_best.argmax()
+        params_best = group.params.iloc[idx_best]
+        final_models.loc[k] = (name, params_best, median_best)
     return final_models, performance_distribution
     
 def single_model_cv_and_test(folds,alg_name,params,X_test,y_test,maj_vote='hard'):
