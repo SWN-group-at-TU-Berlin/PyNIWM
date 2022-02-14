@@ -191,23 +191,25 @@ def best_model_selection(configfile, num_seed):
     # initialize matrix for all results 
     performance_distribution = pd.DataFrame()
     # load results for each seed from cv files
-    for j in range(num_seed): 
-        results = pd.read_pickle('cv_results/cv_results_seed{}'.format(j))
+    for j in range(10): 
+        # results = pd.read_pickle('cv_results/cv_results_seed{}'.format(j))
+        results = pd.read_pickle('/Users/Marie-Philine/Documents/SWN/NIWM/results_wo_smote/cv_results/cv_results_seed{}'.format(j))
         performance_distribution = performance_distribution.append(results)
     # final selection of best params combination
-    final_models = pd.DataFrame(columns=['algorithm','params', 'median_f1score'])
+    final_models = pd.DataFrame(columns=['algorithm','params', 'median_f1score', 'time'])
     algo = performance_distribution.groupby('algorithm')
     for k,(name, group) in enumerate(algo):
         # extract and reshape f1 score for each parameter combination across all seeds
-        f1_matrix = np.array(group.avg_f1score).reshape((num_seed, -1))
+        f1_matrix = np.array(group.avg_f1score).reshape((num_seed[k], -1))
         # compute median and get index and parameters for best median performance model
         median_best = np.median(f1_matrix, axis=0).max()
-        idx_best = median_best.argmax()
+        idx_best =np.median(f1_matrix, axis=0).argmax() 
         params_best = group.params.iloc[idx_best]
-        final_models.loc[k] = (name, params_best, median_best)
+        time_best = group.time.iloc[idx_best]
+        final_models.loc[k] = (name, params_best, median_best, time_best)
     return final_models, performance_distribution
     
-def single_model_cv_and_test(folds,alg_name,params,X_test,y_test,maj_vote='hard'):
+def single_model_cv_and_test(folds,alg_name,params,X_test,maj_vote='hard'):
     # only hard majority vote implemented; to implement: 'soft' (e.g., with predict proba)
     if maj_vote != 'hard':
         error('Only hard majority vote implemented!')

@@ -5,7 +5,8 @@
 # --- Data configurations --------------------------------------------------------------------------
 
 # which data set to use
-dataset:  REU2016_set2.csv
+dataset:  /Users/Marie-Philine/tubCloud/SWNteam/_RESEARCH/W-E_jointAnalysis/REU_Classification/Processed Data/REU2016_set2.csv 
+#REU2016_set2.csv
 
 features:
 - Duration
@@ -36,7 +37,7 @@ n-folds: 5
 # specify one or multiple classification models (RandomForest, LightGBM, XGBoost, ANN):
 algorithm:
 - RandomForestClassifier
-- LogisticRegression
+# - LogisticRegression
 - XGBClassifier
 - LGBMClassifier
 - ANNClassifier
@@ -76,10 +77,12 @@ hyperParams:
             - 4.0
             - 10.0
         solver: 
-            - 'newton-cg'
+            # - 'newton-cg'
             - 'sag'
             - 'saga'
-            - 'lbfgs'
+            # - 'lbfgs'
+        tol:
+            - 0.01
         n_jobs:
             - -1
     XGBClassifier:
