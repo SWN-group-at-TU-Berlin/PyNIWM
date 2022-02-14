@@ -5,8 +5,7 @@
 # --- Data configurations --------------------------------------------------------------------------
 
 # which data set to use
-dataset:  /Users/Marie-Philine/tubCloud/SWNteam/_RESEARCH/W-E_jointAnalysis/REU_Classification/Processed Data/REU2016_set2.csv 
-#REU2016_set2.csv
+dataset: REU2016_set2.csv
 
 features:
 - Duration
