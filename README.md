@@ -1,5 +1,5 @@
-## NIWC 
-__Non-Intrusive Identification of Water Consumption__
+## PyNIWM 
+__Non-Intrusive Water Consumption Monitoring__
 
 Framework for comparing different classification algorithms on identifying water consumption. 
 
